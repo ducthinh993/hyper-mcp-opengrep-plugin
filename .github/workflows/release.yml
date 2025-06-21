@@ -33,7 +33,8 @@ jobs:
     permissions:
       contents: read
       packages: write
-      id-token: write # This is required for signing the image.
+      id-token: write
+      attestations: write
 
     steps:
       - name: Checkout repository
@@ -69,6 +70,13 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Attest Build Provenance
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-name: "ghcr.io/${{ github.repository }}"
+          subject-digest: ${{ steps.build-and-push.outputs.digest }}
+          push-to-registry: true
 
       - name: Generate SBOM
         uses: anchore/sbom-action@v0
