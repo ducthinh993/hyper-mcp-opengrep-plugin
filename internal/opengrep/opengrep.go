@@ -1,9 +1,9 @@
 package opengrep
 
 import (
-	"encoding/json"
 	"fmt"
 	"os/exec"
+	"strings"
 	"sync"
 )
 
@@ -18,16 +18,15 @@ var (
 
 // HandleOpenGrepRequest parses the input, runs opengrep, and returns the output or an error.
 func HandleOpenGrepRequest(input []byte) ([]byte, error) {
-	var req OpenGrepRequest
-	if err := json.Unmarshal(input, &req); err != nil {
-		return nil, fmt.Errorf("error unmarshaling JSON input: %w", err)
-	}
+	// The input is now a simple string of arguments, not JSON.
+	argString := string(input)
+	args := strings.Fields(argString)
 
-	if len(req.Args) == 0 {
+	if len(args) == 0 {
 		return nil, fmt.Errorf("no arguments provided for opengrep command")
 	}
 
-	return runOpenGrep(req.Args)
+	return runOpenGrep(args)
 }
 
 // CheckOpenGrep verifies that the opengrep command is available and executable.
