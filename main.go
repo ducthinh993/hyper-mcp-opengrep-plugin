@@ -1,3 +1,5 @@
+//go:build extism || !extism
+
 package main
 
 import (
