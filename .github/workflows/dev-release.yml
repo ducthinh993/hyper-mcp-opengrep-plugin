@@ -48,6 +48,13 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
+      - name: Generate SBOM
+        uses: anchore/sbom-action@v0
+        with:
+          image: "ghcr.io/${{ github.repository }}:${{ steps.meta.outputs.version }}"
+          format: spdx-json
+          output-file: "sbom.spdx.json"
+
       - name: Sign the container image with Cosign
         uses: sigstore/cosign-installer@v3
         with:
@@ -56,6 +63,9 @@ jobs:
       - name: Sign the container image with Cosign
         run: |
           cosign sign --yes \
+            "ghcr.io/${{ github.repository }}@${{ steps.build-and-push.outputs.digest }}"
+          cosign attest --yes --type spdxjson \
+            --predicate sbom.spdx.json \
             "ghcr.io/${{ github.repository }}@${{ steps.build-and-push.outputs.digest }}"
         env:
           COSIGN_EXPERIMENTAL: "true"
