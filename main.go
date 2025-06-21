@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"log"
 
+	og "hyper-mcp-opengrep-plugin/internal/opengrep"
+
 	"github.com/extism/go-pdk"
 )
 
@@ -15,7 +17,7 @@ import (
 //export opengrep
 func opengrep() int32 {
 	// Validate opengrep availability
-	if err := opengrep.CheckAvailability(); err != nil {
+	if err := og.CheckAvailability(); err != nil {
 		log.Printf("opengrep availability check failed: %v", err)
 		pdk.SetError(fmt.Errorf("opengrep not available: %w", err))
 		return 1
@@ -29,7 +31,7 @@ func opengrep() int32 {
 	}
 
 	// Process the opengrep request
-	output, err := opengrep.Execute(input)
+	output, err := og.Execute(input)
 	if err != nil {
 		// Log the error for debugging
 		log.Printf("opengrep execution failed: %v", err)
