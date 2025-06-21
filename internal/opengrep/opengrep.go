@@ -1,4 +1,4 @@
-package main
+package opengrep
 
 import (
 	"encoding/json"
@@ -16,8 +16,8 @@ var (
 	checkErr error
 )
 
-// handleOpenGrepRequest parses the input, runs opengrep, and returns the output or an error.
-func handleOpenGrepRequest(input []byte) ([]byte, error) {
+// HandleOpenGrepRequest parses the input, runs opengrep, and returns the output or an error.
+func HandleOpenGrepRequest(input []byte) ([]byte, error) {
 	var req OpenGrepRequest
 	if err := json.Unmarshal(input, &req); err != nil {
 		return nil, fmt.Errorf("error unmarshaling JSON input: %w", err)
@@ -30,9 +30,9 @@ func handleOpenGrepRequest(input []byte) ([]byte, error) {
 	return runOpenGrep(req.Args)
 }
 
-// checkOpenGrep verifies that the opengrep command is available and executable.
+// CheckOpenGrep verifies that the opengrep command is available and executable.
 // It uses sync.Once to perform the check only on the first call.
-func checkOpenGrep() error {
+func CheckOpenGrep() error {
 	checkOnce.Do(func() {
 		cmd := exec.Command(opengrepCmd, "--version")
 		if err := cmd.Run(); err != nil {
