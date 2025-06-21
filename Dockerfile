@@ -17,7 +17,7 @@ COPY internal/ ./internal/
 COPY main.go .
 
 # Build the WASM plugin
-RUN go build -o /out/plugin.wasm .
+RUN go build -tags=extism -o /out/plugin.wasm .
 
 # Use a minimal image to package the plugin
 FROM scratch
