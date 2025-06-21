@@ -12,39 +12,53 @@ type OpenGrepRequest struct {
 	Args []string `json:"args"`
 }
 
+// checkOpenGrep verifies that the opengrep command is available and executable.
+func checkOpenGrep() error {
+	cmd := exec.Command("opengrep", "--version")
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("opengrep command not found or not executable: %w. Please ensure it is installed and in your PATH", err)
+	}
+	return nil
+}
+
+// runOpenGrep executes the opengrep command with the provided arguments and returns the combined output.
+func runOpenGrep(args []string) ([]byte, error) {
+	cmd := exec.Command("opengrep", args...)
+	return cmd.CombinedOutput()
+}
+
 //export opengrep
 func opengrep() int32 {
-	// Read input from the host
-	input := pdk.Input()
+	// 1. Verify that opengrep is available before proceeding.
+	if err := checkOpenGrep(); err != nil {
+		pdk.SetError(err)
+		return 1 // A non-zero exit code indicates a fatal plugin/environment error.
+	}
 
-	// Unmarshal the JSON input into our struct
+	// 2. Read and parse the arguments from the host.
+	input := pdk.Input()
 	var req OpenGrepRequest
 	if err := json.Unmarshal(input, &req); err != nil {
-		pdk.SetError(fmt.Errorf("Error unmarshaling JSON input: %v", err))
+		pdk.SetError(fmt.Errorf("error unmarshaling JSON input: %v", err))
 		return 1
 	}
 
-	// Check if any arguments were provided
 	if len(req.Args) == 0 {
-		pdk.SetError(fmt.Errorf("No arguments provided for opengrep command"))
+		pdk.SetError(fmt.Errorf("no arguments provided for opengrep command"))
 		return 1
 	}
 
-	// Construct the opengrep command with user-provided arguments
-	cmd := exec.Command("opengrep", req.Args...)
+	// 3. Execute the opengrep command.
+	output, err := runOpenGrep(req.Args)
 
-	// Execute the command and get the combined output (stdout and stderr)
-	output, err := cmd.CombinedOutput()
+	// An error from opengrep (e.g., a non-zero exit code on no match) is not a plugin
+	// failure. We report it as part of the error message but still return the output.
 	if err != nil {
-		// If the command fails, output the error to the host, including the command's output
-		pdk.SetError(fmt.Errorf("Error executing opengrep: %v\nOutput: %s", err, string(output)))
-		// Still return 0 to send the output back, the error is in the message.
-		// A non-zero exit code from opengrep is not a plugin failure.
+		pdk.SetError(fmt.Errorf("error executing opengrep: %v\nOutput: %s", err, string(output)))
 	}
 
-	// Return the command's output to the host
+	// 4. Return the result to the host.
 	pdk.Output(output)
-
 	return 0
 }
 
