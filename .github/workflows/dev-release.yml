@@ -11,6 +11,7 @@ jobs:
     permissions:
       contents: read
       packages: write
+      id-token: write
 
     steps:
       - name: Checkout repository
@@ -38,6 +39,7 @@ jobs:
             type=sha,prefix=dev-,format=short
 
       - name: Build and push Docker image
+        id: build-and-push
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -45,3 +47,15 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Sign the container image with Cosign
+        uses: sigstore/cosign-installer@v3
+        with:
+          cosign-release: 'v2.2.4'
+
+      - name: Sign the container image with Cosign
+        run: |
+          cosign sign --yes \
+            "ghcr.io/${{ github.repository }}@${{ steps.build-and-push.outputs.digest }}"
+        env:
+          COSIGN_EXPERIMENTAL: "true"

@@ -2,15 +2,38 @@ name: Release OCI Image
 
 on:
   push:
-    tags:
-      - 'v*'
+    branches:
+      - 'main'
 
 jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # needed to create release
+      issues: write # needed to create release
+      pull-requests: write # needed to create release
+    outputs:
+      new_release_published: ${{ steps.semantic.outputs.new_release_published }}
+      new_release_version: ${{ steps.semantic.outputs.new_release_version }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Go Semantic Release
+        id: semantic
+        uses: go-semantic-release/action@v1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
   build-and-push-image:
+    needs: release
+    if: needs.release.outputs.new_release_published == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
+      id-token: write # This is required for signing the image.
 
     steps:
       - name: Checkout repository
@@ -34,8 +57,11 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=raw,value=${{ needs.release.outputs.new_release_version }}
 
       - name: Build and push Docker image
+        id: build-and-push
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -43,3 +69,15 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Sign the container image with Cosign
+        uses: sigstore/cosign-installer@v3
+        with:
+          cosign-release: 'v2.2.4'
+
+      - name: Sign the container image with Cosign
+        run: |
+          cosign sign --yes \
+            "ghcr.io/${{ github.repository }}@${{ steps.build-and-push.outputs.digest }}"
+        env:
+          COSIGN_EXPERIMENTAL: "true"
