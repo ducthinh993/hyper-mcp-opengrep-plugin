@@ -1,5 +1,8 @@
 # Hyper-MCP OpenGrep Plugin
 
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/{owner}/{repo}/badge)](https://scorecard.dev/viewer/?uri=github.com/{owner}/{repo})
+
+
 A `hyper-mcp` plugin that provides a direct interface to the `opengrep` static code analysis engine. This plugin allows an AI agent to execute any `opengrep` command, enabling powerful and flexible code scanning directly from an MCP-compatible client like Cursor.
 
 ## Features
