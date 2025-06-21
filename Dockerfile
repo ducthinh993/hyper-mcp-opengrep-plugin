@@ -21,6 +21,13 @@ RUN go build -o /out/plugin.wasm .
 
 # Use a minimal image to package the plugin
 FROM scratch
+
+LABEL org.opencontainers.image.description="OpenGrep MCP Plugin"
+LABEL org.opencontainers.image.licenses="MIT"
+LABEL org.opencontainers.image.authors="ducthinh993"
+LABEL org.opencontainers.image.vendor="ducthinh993"
+LABEL org.opencontainers.image.url="https://github.com/ducthinh993/hyper-mcp-opengrep-plugin"
+
 WORKDIR /
 COPY --from=builder /out/plugin.wasm /plugin.wasm
 ENTRYPOINT [ "/plugin.wasm" ]
